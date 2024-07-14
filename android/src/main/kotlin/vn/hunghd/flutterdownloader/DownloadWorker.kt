@@ -51,12 +51,10 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-class DownloadWorker(context: Context, params: WorkerParameters) :
-    Worker(context, params),
+class DownloadWorker(context: Context, params: WorkerParameters) : Worker(context, params),
     MethodChannel.MethodCallHandler {
     private val charsetPattern = Pattern.compile("(?i)\\bcharset=\\s*\"?([^\\s;\"]*)")
-    private val filenameStarPattern =
-        Pattern.compile("(?i)\\bfilename\\*=([^']+)'([^']*)'\"?([^\"]+)\"?")
+    private val filenameStarPattern = Pattern.compile("(?i)\\bfilename\\*=([^']+)'([^']*)'\"?([^\"]+)\"?")
     private val filenamePattern = Pattern.compile("(?i)\\bfilename=\"?([^\"]+)\"?")
     private var backgroundChannel: MethodChannel? = null
     private var dbHelper: TaskDbHelper? = null
@@ -80,12 +78,10 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         synchronized(isolateStarted) {
             if (backgroundFlutterEngine == null) {
                 val pref: SharedPreferences = context.getSharedPreferences(
-                    FlutterDownloaderPlugin.SHARED_PREFERENCES_KEY,
-                    Context.MODE_PRIVATE
+                    FlutterDownloaderPlugin.SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE
                 )
                 val callbackHandle: Long = pref.getLong(
-                    FlutterDownloaderPlugin.CALLBACK_DISPATCHER_HANDLE_KEY,
-                    0
+                    FlutterDownloaderPlugin.CALLBACK_DISPATCHER_HANDLE_KEY, 0
                 )
                 backgroundFlutterEngine = FlutterEngine(applicationContext, null, false)
 
@@ -98,21 +94,17 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                     log("Fatal: failed to find callback")
                     return
                 }
-                val appBundlePath: String =
-                    FlutterInjector.instance().flutterLoader().findAppBundlePath()
+                val appBundlePath: String = FlutterInjector.instance().flutterLoader().findAppBundlePath()
                 val assets = applicationContext.assets
                 backgroundFlutterEngine?.dartExecutor?.executeDartCallback(
                     DartExecutor.DartCallback(
-                        assets,
-                        appBundlePath,
-                        flutterCallback
+                        assets, appBundlePath, flutterCallback
                     )
                 )
             }
         }
         backgroundChannel = MethodChannel(
-            backgroundFlutterEngine!!.dartExecutor,
-            "vn.hunghd/downloader_background"
+            backgroundFlutterEngine!!.dartExecutor, "vn.hunghd/downloader_background"
         )
         backgroundChannel?.setMethodCallHandler(this)
     }
@@ -169,10 +161,8 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         msgComplete = res.getString(R.string.flutter_downloader_notification_complete)
         val task = taskDao?.loadTask(id.toString())
         log(
-            "DownloadWorker{url=$url,filename=$filename,savedDir=$savedDir,header=$headers,isResume=$isResume,status=" + (
-                task?.status
-                    ?: "GONE"
-                )
+            "DownloadWorker{url=$url,filename=$filename,savedDir=$savedDir,header=$headers,isResume=$isResume,status=" + (task?.status
+                ?: "GONE")
         )
 
         // Task has been deleted or cancelled
@@ -180,18 +170,12 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
             return Result.success()
         }
         showNotification = inputData.getBoolean(ARG_SHOW_NOTIFICATION, false)
-        clickToOpenDownloadedFile =
-            inputData.getBoolean(ARG_OPEN_FILE_FROM_NOTIFICATION, false)
+        clickToOpenDownloadedFile = inputData.getBoolean(ARG_OPEN_FILE_FROM_NOTIFICATION, false)
         saveInPublicStorage = inputData.getBoolean(ARG_SAVE_IN_PUBLIC_STORAGE, false)
         primaryId = task.primaryId
         setupNotification(applicationContext)
         updateNotification(
-            applicationContext,
-            filename ?: url,
-            DownloadStatus.RUNNING,
-            task.progress,
-            null,
-            false
+            applicationContext, filename ?: url, DownloadStatus.RUNNING, task.progress, null, false
         )
         taskDao?.updateTask(id.toString(), DownloadStatus.RUNNING, task.progress)
 
@@ -236,9 +220,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
     }
 
     private fun setupPartialDownloadedDataHeader(
-        conn: HttpURLConnection,
-        filename: String?,
-        savedDir: String
+        conn: HttpURLConnection, filename: String?, savedDir: String
     ): Long {
         val saveFilePath = savedDir + File.separator + filename
         val partialFile = File(saveFilePath)
@@ -249,7 +231,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         conn.doInput = true
         return downloadedBytes
     }
-    
+
     private fun downloadFile(
         context: Context,
         fileURL: String,
@@ -292,8 +274,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                 httpConn = if (ignoreSsl) {
                     trustAllHosts()
                     if (resourceUrl.protocol.lowercase(Locale.US) == "https") {
-                        val https: HttpsURLConnection =
-                            resourceUrl.openConnection() as HttpsURLConnection
+                        val https: HttpsURLConnection = resourceUrl.openConnection() as HttpsURLConnection
                         https.hostnameVerifier = DO_NOT_VERIFY
                         https
                     } else {
@@ -320,11 +301,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                 }
                 responseCode = httpConn.responseCode
                 when (responseCode) {
-                    HttpURLConnection.HTTP_MOVED_PERM,
-                    HttpURLConnection.HTTP_SEE_OTHER,
-                    HttpURLConnection.HTTP_MOVED_TEMP,
-                    307,
-                    308 -> {
+                    HttpURLConnection.HTTP_MOVED_PERM, HttpURLConnection.HTTP_SEE_OTHER, HttpURLConnection.HTTP_MOVED_TEMP, 307, 308 -> {
                         log("Response with redirection code")
                         location = httpConn.getHeaderField("Location")
                         log("Location = $location")
@@ -359,8 +336,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                             actualFilename = url.substring(url.lastIndexOf("/") + 1)
                             try {
                                 actualFilename = URLDecoder.decode(actualFilename, "UTF-8")
-                            } catch (e: IllegalArgumentException) {
-                                /* ok, just let filename be not encoded */
+                            } catch (e: IllegalArgumentException) {/* ok, just let filename be not encoded */
                                 e.printStackTrace()
                             }
                         }
@@ -402,9 +378,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                     count += bytesRead.toLong()
                     val progress = (count * 100 / (contentLength + downloadedBytes)).toInt()
                     outputStream?.write(buffer, 0, bytesRead)
-                    if ((lastProgress == 0 || progress > lastProgress + step || progress == 100) &&
-                        progress != lastProgress
-                    ) {
+                    if ((lastProgress == 0 || progress > lastProgress + step || progress == 100) && progress != lastProgress) {
                         lastProgress = progress
 
                         // This line possibly causes system overloaded because of accessing to DB too many ?!!!
@@ -413,12 +387,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                         // a new bunch of data fetched and a notification sent
                         taskDao!!.updateTask(id.toString(), DownloadStatus.RUNNING, progress)
                         updateNotification(
-                            context,
-                            actualFilename,
-                            DownloadStatus.RUNNING,
-                            progress,
-                            null,
-                            false
+                            context, actualFilename, DownloadStatus.RUNNING, progress, null, false
                         )
                     }
                 }
@@ -427,33 +396,27 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                 val status =
                     if (isStopped) if (loadedTask!!.resumable) DownloadStatus.PAUSED else DownloadStatus.CANCELED else DownloadStatus.COMPLETE
                 val storage: Int = ContextCompat.checkSelfPermission(
-                    applicationContext,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    applicationContext, Manifest.permission.WRITE_EXTERNAL_STORAGE
                 )
                 var pendingIntent: PendingIntent? = null
                 if (status == DownloadStatus.COMPLETE) {
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                         if (isImageOrVideoFile(contentType) && isExternalStoragePath(savedFilePath)) {
                             addImageOrVideoToGallery(
-                                actualFilename,
-                                savedFilePath,
-                                getContentTypeWithoutCharset(contentType)
+                                actualFilename, savedFilePath, getContentTypeWithoutCharset(contentType)
                             )
                         }
                     }
                     if (clickToOpenDownloadedFile) {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && storage != PackageManager.PERMISSION_GRANTED) return
                         val intent = IntentUtils.validatedFileIntent(
-                            applicationContext,
-                            savedFilePath!!,
-                            contentType
+                            applicationContext, savedFilePath!!, contentType
                         )
                         if (intent != null) {
                             log("Setting an intent to open the file $savedFilePath")
                             val flags: Int =
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE else PendingIntent.FLAG_CANCEL_CURRENT
-                            pendingIntent =
-                                PendingIntent.getActivity(applicationContext, 0, intent, flags)
+                            pendingIntent = PendingIntent.getActivity(applicationContext, 0, intent, flags)
                         } else {
                             log("There's no application that can open the file $savedFilePath")
                         }
@@ -494,23 +457,23 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         }
     }
 
-    
-   private File getUniqueFileName(String fileName, String savedDir) {
-        int num = 1;
-        String extension = getExtension(fileName);
-        String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf("."));
-        File file = new File(savedDir, fileName);
+    private fun getUniqueFileName(fileName: String, savedDir: String): File {
+        var fileName = fileName
+        var num = 1
+        val extension = getExtension(fileName)
+        val fileNameWithoutExtension: String = fileName.substring(0, fileName.lastIndexOf("."))
+        var file: File = File(savedDir, fileName)
         while (file.exists()) {
-            fileName = fileNameWithoutExtension + "(" + (num++) + ")" + extension;
-            file = new File(savedDir, fileName);
+            fileName = fileNameWithoutExtension.toString() + "(" + (num++) + ")" + extension
+            file = File(savedDir, fileName)
         }
-        return file;
+        return file
     }
 
-    private String getExtension(String name) {
-        return name.substring(name.lastIndexOf("."));
+    private fun getExtension(name: String): String {
+        return name.substring(name.lastIndexOf("."))
     }
-    
+
     /**
      * Create a file using java.io API
      */
@@ -550,11 +513,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
     private fun getMediaStoreEntryPathApi29(uri: Uri): String? {
         try {
             applicationContext.contentResolver.query(
-                uri,
-                arrayOf(MediaStore.Files.FileColumns.DATA),
-                null,
-                null,
-                null
+                uri, arrayOf(MediaStore.Files.FileColumns.DATA), null, null, null
             ).use { cursor ->
                 if (cursor == null) return null
                 return if (!cursor.moveToFirst()) {
@@ -594,15 +553,12 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
     private val notificationIconRes: Int
         get() {
             try {
-                val applicationInfo: ApplicationInfo = applicationContext.packageManager
-                    .getApplicationInfo(
-                        applicationContext.packageName,
-                        PackageManager.GET_META_DATA
-                    )
+                val applicationInfo: ApplicationInfo = applicationContext.packageManager.getApplicationInfo(
+                    applicationContext.packageName, PackageManager.GET_META_DATA
+                )
                 val appIconResId: Int = applicationInfo.icon
                 return applicationInfo.metaData.getInt(
-                    "vn.hunghd.flutterdownloader.NOTIFICATION_ICON",
-                    appIconResId
+                    "vn.hunghd.flutterdownloader.NOTIFICATION_ICON", appIconResId
                 )
             } catch (e: PackageManager.NameNotFoundException) {
                 e.printStackTrace()
@@ -642,52 +598,41 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         // Show the notification
         if (showNotification) {
             // Create the notification
-            val builder = NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle(title)
-                .setContentIntent(intent)
-                .setOnlyAlertOnce(true)
-                .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
+            val builder =
+                NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle(title).setContentIntent(intent)
+                    .setOnlyAlertOnce(true).setAutoCancel(true).setPriority(NotificationCompat.PRIORITY_LOW)
             when (status) {
                 DownloadStatus.RUNNING -> {
                     if (progress <= 0) {
-                        builder.setContentText(msgStarted)
-                            .setProgress(0, 0, false)
-                        builder.setOngoing(false)
-                            .setSmallIcon(notificationIconRes)
+                        builder.setContentText(msgStarted).setProgress(0, 0, false)
+                        builder.setOngoing(false).setSmallIcon(notificationIconRes)
                     } else if (progress < 100) {
-                        builder.setContentText(msgInProgress)
-                            .setProgress(100, progress, false)
-                        builder.setOngoing(true)
-                            .setSmallIcon(android.R.drawable.stat_sys_download)
+                        builder.setContentText(msgInProgress).setProgress(100, progress, false)
+                        builder.setOngoing(true).setSmallIcon(android.R.drawable.stat_sys_download)
                     } else {
                         builder.setContentText(msgComplete).setProgress(0, 0, false)
-                        builder.setOngoing(false)
-                            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                        builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                     }
                 }
 
                 DownloadStatus.CANCELED -> {
                     builder.setContentText(msgCanceled).setProgress(0, 0, false)
-                    builder.setOngoing(false)
-                        .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 }
 
                 DownloadStatus.FAILED -> {
                     builder.setContentText(msgFailed).setProgress(0, 0, false)
-                    builder.setOngoing(false)
-                        .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 }
 
                 DownloadStatus.PAUSED -> {
                     builder.setContentText(msgPaused).setProgress(0, 0, false)
-                    builder.setOngoing(false)
-                        .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 }
 
                 DownloadStatus.COMPLETE -> {
                     builder.setContentText(msgComplete).setProgress(0, 0, false)
-                    builder.setOngoing(false)
-                        .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 }
 
                 else -> {
@@ -752,8 +697,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
     @Throws(UnsupportedEncodingException::class)
     private fun getFileNameFromContentDisposition(
-        disposition: String?,
-        contentCharset: String?
+        disposition: String?, contentCharset: String?
     ): String? {
         if (disposition == null) return null
         var name: String? = null
@@ -771,8 +715,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
             null
         } else {
             URLDecoder.decode(
-                name,
-                charset ?: "ISO-8859-1"
+                name, charset ?: "ISO-8859-1"
             )
         }
     }
@@ -794,9 +737,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
     }
 
     private fun addImageOrVideoToGallery(
-        fileName: String?,
-        filePath: String?,
-        contentType: String?
+        fileName: String?, filePath: String?, contentType: String?
     ) {
         if (contentType != null && filePath != null && fileName != null) {
             if (contentType.startsWith("image/")) {
@@ -867,27 +808,23 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         private fun trustAllHosts() {
             val tag = "trustAllHosts"
             // Create a trust manager that does not validate certificate chains
-            val trustManagers: Array<TrustManager> = arrayOf(
-                @SuppressLint("CustomX509TrustManager")
-                object : X509TrustManager {
+            val trustManagers: Array<TrustManager> =
+                arrayOf(@SuppressLint("CustomX509TrustManager") object : X509TrustManager {
 
                     override fun checkClientTrusted(
-                        chain: Array<X509Certificate>,
-                        authType: String
+                        chain: Array<X509Certificate>, authType: String
                     ) {
                         Log.i(tag, "checkClientTrusted")
                     }
 
                     override fun checkServerTrusted(
-                        chain: Array<X509Certificate>,
-                        authType: String
+                        chain: Array<X509Certificate>, authType: String
                     ) {
                         Log.i(tag, "checkServerTrusted")
                     }
 
                     override fun getAcceptedIssuers(): Array<out X509Certificate> = emptyArray()
-                }
-            )
+                })
 
             // Install the all-trusting trust manager
             try {
