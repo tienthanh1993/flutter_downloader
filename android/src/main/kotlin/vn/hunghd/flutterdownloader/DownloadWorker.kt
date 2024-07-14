@@ -249,7 +249,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         conn.doInput = true
         return downloadedBytes
     }
-
+    
     private fun downloadFile(
         context: Context,
         fileURL: String,
@@ -494,18 +494,29 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         }
     }
 
+    
+   private File getUniqueFileName(String fileName, String savedDir) {
+        int num = 1;
+        String extension = getExtension(fileName);
+        String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf("."));
+        File file = new File(savedDir, fileName);
+        while (file.exists()) {
+            fileName = fileNameWithoutExtension + "(" + (num++) + ")" + extension;
+            file = new File(savedDir, fileName);
+        }
+        return file;
+    }
+
+    private String getExtension(String name) {
+        return name.substring(name.lastIndexOf("."));
+    }
+    
     /**
      * Create a file using java.io API
      */
     private fun createFileInAppSpecificDir(filename: String, savedDir: String): File? {
-        val newFile = File(savedDir, filename)
         try {
-            val rs: Boolean = newFile.createNewFile()
-            if (rs) {
-                return newFile
-            } else {
-                logError("It looks like you are trying to save file in public storage but not setting 'saveInPublicStorage' to 'true'")
-            }
+            return getUniqueFileName(filename, savedDir)
         } catch (e: IOException) {
             e.printStackTrace()
             logError("Create a file using java.io API failed ")
