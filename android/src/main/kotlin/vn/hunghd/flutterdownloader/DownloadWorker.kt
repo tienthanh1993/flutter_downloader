@@ -479,7 +479,13 @@ class DownloadWorker(context: Context, params: WorkerParameters) : Worker(contex
      */
     private fun createFileInAppSpecificDir(filename: String, savedDir: String): File? {
         try {
-            return getUniqueFileName(filename, savedDir)
+            var newFile: File = getUniqueFileName(filename, savedDir)
+            val rs: Boolean = newFile.createNewFile()
+            if (rs) {
+                return newFile
+            } else {
+                logError("It looks like you are trying to save file in public storage but not setting 'saveInPublicStorage' to 'true'")
+            }
         } catch (e: IOException) {
             e.printStackTrace()
             logError("Create a file using java.io API failed ")
